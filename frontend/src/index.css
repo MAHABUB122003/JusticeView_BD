@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@theme {
+  /* Primary Colors */
+  --color-justice-blue: #0A1F44;
+  --color-justice-blue-dark: #06142E;
+  --color-justice-blue-light: #1A3A6B;
+  --color-justice-gold: #C9A84C;
+  --color-justice-gold-dark: #A8883A;
+  --color-justice-gold-light: #E8C84A;
+  --color-court-red: #8B1A1A;
+  --color-court-red-dark: #6B1212;
+  --color-success-green: #1A6B3C;
+  --color-info-blue: #1A56A6;
+
+  /* Neutrals */
+  --color-off-white: #F8F9FA;
+  --color-light-gray: #E9ECEF;
+  --color-medium-gray: #CED4DA;
+  --color-dark-gray: #6C757D;
+  --color-near-black: #1A1A2E;
+
+  /* Shadows */
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-card-hover: 0 12px 24px rgba(0,0,0,0.1);
+  --shadow-form: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-hero: 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-table: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-gold: 0 4px 14px rgba(201,168,76,0.4);
+
+  /* Fonts */
+  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-noto-bengali: 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Animations */
+  --animate-fade-in-up: fadeInUp 0.6s ease-out;
+  --animate-fade-in: fadeIn 0.4s ease-out;
+  --animate-scale-in: scaleIn 0.3s ease-out;
+  --animate-slide-down: slideDown 0.3s ease-out;
+  --animate-modal-in: modalIn 0.3s ease-out;
+  --animate-pulse-gold: pulseGold 2s infinite;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes pulseGold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(201,168,76,0); }
+}
+
+body {
+  font-family: var(--font-inter);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--color-near-black);
+}
+
+/* Bengali font class */
+.font-bengali {
+  font-family: var(--font-noto-bengali);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: var(--color-medium-gray); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-dark-gray); }
+
+/* Transition base */
+* { transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform; transition-duration: 200ms; }
