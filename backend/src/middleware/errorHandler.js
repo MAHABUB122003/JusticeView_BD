@@ -4,8 +4,11 @@ const errorHandler = (err, req, res, next) => {
   logger.error(err.stack || err.message);
 
   if (err.name === 'ValidationError') {
-    const messages = Object.values(err.errors).map(e => e.message);
-    return res.status(400).json({ success: false, message: 'Validation error', errors: messages });
+    const errors = Object.values(err.errors).map(e => ({
+      field: e.path || e.properties?.path,
+      message: e.message,
+    }));
+    return res.status(400).json({ success: false, message: 'Validation error', errors });
   }
 
   if (err.code === 11000) {

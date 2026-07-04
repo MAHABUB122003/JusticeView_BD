@@ -271,15 +271,14 @@ exports.search = async (req, res, next) => {
         { caseNumber: regex },
         { description: regex },
       ];
+      if (q.match(/^[0-9a-fA-F]{24}$/)) {
+        filter.$or.push({ _id: q });
+      }
     }
 
     const [cases, total] = await Promise.all([
       Case.find(filter)
-        .populate({
-          path: 'criminal',
-          match: q ? { $or: [{ name: buildSearchRegex(q) }, { name_bn: buildSearchRegex(q) }, { nid: buildSearchRegex(q) }] } : {},
-          select: 'name name_bn nid photo',
-        })
+        .populate('criminal', 'name name_bn nid photo')
         .populate('arrestingOfficer', 'name badgeNumber')
         .populate('thana', 'name name_bn')
         .populate('court', 'name name_bn')

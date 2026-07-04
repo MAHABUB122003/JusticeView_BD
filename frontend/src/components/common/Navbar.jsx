@@ -9,6 +9,7 @@ import SearchBar from '../ui/SearchBar';
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation('common');
@@ -65,52 +66,58 @@ export default function Navbar() {
             <LanguageToggle />
 
             {user ? (
-              <div className="relative group">
-                <button className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/5 transition-all">
+              <div className="relative">
+                <button
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  onBlur={() => setTimeout(() => setShowProfileMenu(false), 200)}
+                  className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/5 transition-all"
+                >
                   <div className="w-9 h-9 bg-justice-gold/20 rounded-full flex items-center justify-center text-justice-gold text-sm font-bold">
                     {user.name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                   <span className="text-sm font-medium text-white">{user.name?.split(' ')[0]}</span>
-                  <FiChevronDown className="text-white/60 text-sm" />
+                  <FiChevronDown className={`text-white/60 text-sm transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
 
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 border border-light-gray/60 overflow-hidden">
-                  <div className="px-4 py-3 bg-gradient-to-r from-justice-blue to-justice-blue-light border-b border-light-gray/60">
-                    <p className="text-sm font-semibold text-white">{user.name}</p>
-                    <p className="text-xs text-white/70">{user.email}</p>
-                  </div>
-                  <div className="py-2">
-                    <Link to="/dashboard" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
-                      <FiGrid className="text-justice-gold" /> {t('nav.dashboard')}
-                    </Link>
-                    <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
-                      <FiUser className="text-justice-gold" /> {t('nav.profile')}
-                    </Link>
-                    <Link to="/settings" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
-                      <FiSettings className="text-justice-gold" /> {t('nav.settings')}
-                    </Link>
-                    {isPolice && (
-                      <Link to="/police/arrest" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
-                        <FiShield className="text-justice-gold" /> {t('nav.create', 'New Arrest')}
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-light-gray/60 overflow-hidden z-50">
+                    <div className="px-4 py-3 bg-gradient-to-r from-justice-blue to-justice-blue-light border-b border-light-gray/60">
+                      <p className="text-sm font-semibold text-white">{user.name}</p>
+                      <p className="text-xs text-white/70">{user.email}</p>
+                    </div>
+                    <div className="py-2">
+                      <Link to="/dashboard" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                        <FiGrid className="text-justice-gold" /> {t('nav.dashboard')}
                       </Link>
-                    )}
-                    {isCourt && (
-                      <Link to="/court/bail" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
-                        <FiBookOpen className="text-justice-gold" /> {t('nav.create', 'Bail Entry')}
+                      <Link to="/profile" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                        <FiUser className="text-justice-gold" /> {t('nav.profile')}
                       </Link>
-                    )}
-                    {(isAdmin) && (
-                      <Link to="/admin/users" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
-                        <FiSettings className="text-justice-gold" /> {t('nav.admin')}
+                      <Link to="/settings" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                        <FiSettings className="text-justice-gold" /> {t('nav.settings')}
                       </Link>
-                    )}
+                      {isPolice && (
+                        <Link to="/police/arrest" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                          <FiShield className="text-justice-gold" /> {t('nav.create', 'New Arrest')}
+                        </Link>
+                      )}
+                      {isCourt && (
+                        <Link to="/court/bail" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                          <FiBookOpen className="text-justice-gold" /> {t('nav.create', 'Bail Entry')}
+                        </Link>
+                      )}
+                      {(isAdmin) && (
+                        <Link to="/admin/users" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                          <FiSettings className="text-justice-gold" /> {t('nav.admin')}
+                        </Link>
+                      )}
+                    </div>
+                    <div className="border-t border-light-gray/60 py-2">
+                      <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm text-court-red hover:bg-red-50 transition-colors w-full">
+                        <FiLogOut /> {t('nav.logout')}
+                      </button>
+                    </div>
                   </div>
-                  <div className="border-t border-light-gray/60 py-2">
-                    <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm text-court-red hover:bg-red-50 transition-colors w-full">
-                      <FiLogOut /> {t('nav.logout')}
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-3">
