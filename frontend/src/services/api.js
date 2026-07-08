@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 export const BASE_URL = API_URL.replace('/api', '');
 export const UPLOADS_URL = `${BASE_URL}/uploads`;
 
@@ -41,8 +41,9 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
           const res = await axios.post(`${API_URL}/auth/refresh-token`, { refreshToken });
-          const { accessToken } = res.data.data;
+          const { accessToken, refreshToken: newRefreshToken } = res.data.data;
           localStorage.setItem('accessToken', accessToken);
+          if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         }

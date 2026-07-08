@@ -94,8 +94,6 @@ professionalRegistrySchema.virtual('caseHistories', {
 
 professionalRegistrySchema.index({ role: 1, verification_status: 1 });
 professionalRegistrySchema.index({ name: 1, bn_name: 1 });
-professionalRegistrySchema.index({ badge_no: 1 });
-professionalRegistrySchema.index({ bar_council_no: 1 });
 professionalRegistrySchema.index({ 'current_location.district': 1 });
 professionalRegistrySchema.index({ 'current_location.thana': 1 });
 

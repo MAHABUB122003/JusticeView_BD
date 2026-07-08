@@ -28,6 +28,5 @@ policeOfficerSchema.virtual('cases', {
 });
 
 policeOfficerSchema.index({ thana: 1 });
-policeOfficerSchema.index({ badgeNumber: 1 });
 
 module.exports = mongoose.model('PoliceOfficer', policeOfficerSchema);

@@ -14,6 +14,9 @@ exports.create = async (req, res, next) => {
       if (!criminalExists) {
         return res.status(400).json({ success: false, message: 'Invalid Criminal ID. No criminal found with this ID.' });
       }
+      const nextSeq = (criminalExists.totalCases || 0) + 1;
+      const shortId = data.criminal.toString().slice(-8).toUpperCase();
+      data.caseNumber = `${shortId}-${nextSeq}`;
     }
 
     // Look up arresting officer by ObjectId or badge number
@@ -50,6 +53,9 @@ exports.create = async (req, res, next) => {
         data.thana = thana._id;
       }
     }
+
+    // Strip empty optional ObjectId fields to avoid Mongoose CastErrors
+    if (!data.court) delete data.court;
 
     let thanaId = data.thana;
     if (!thanaId && req.user.thana) {

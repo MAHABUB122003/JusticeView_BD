@@ -102,7 +102,7 @@ export default function BailEntry() {
   const [form, setForm] = useState({
     case: '', criminal: '', lawyer: '', judge: '', bailDate: '',
     bailAmount: '', hearingDate: '', nextHearingDate: '',
-    notes: '', notes_bn: '',
+    punishment: '', punishment_bn: '', notes: '', notes_bn: '',
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -138,7 +138,7 @@ export default function BailEntry() {
     try {
       await bailService.create({ ...form, bailAmount: parseFloat(form.bailAmount) || 0 });
       setMessage(isBn ? 'জামিন রেকর্ড সফলভাবে তৈরি হয়েছে' : 'Bail record created successfully');
-      setForm({ case: '', criminal: '', lawyer: '', judge: '', bailDate: '', bailAmount: '', hearingDate: '', nextHearingDate: '', notes: '', notes_bn: '' });
+      setForm({ case: '', criminal: '', lawyer: '', judge: '', bailDate: '', bailAmount: '', hearingDate: '', nextHearingDate: '', punishment: '', punishment_bn: '', notes: '', notes_bn: '' });
       setSelectedCase(null); setSelectedCriminal(null); setSelectedLawyer(null); setSelectedJudge(null);
     } catch (err) {
       const data = err.response?.data;
@@ -396,15 +396,36 @@ export default function BailEntry() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{isBn ? 'নোট (ইংরেজি)' : 'Notes (English)'}</label>
-              <textarea name="notes" value={form.notes} onChange={handleChange} rows={3}
-                className="w-full px-4 py-3 border-2 border-light-gray rounded-xl focus:border-justice-gold focus:ring-4 focus:ring-justice-gold/20 transition-all text-sm outline-none resize-none" />
+            <div className="border-t border-light-gray pt-5 mt-2">
+              <h3 className="text-sm font-bold text-gray-800 mb-3">{isBn ? 'শাস্তির বিবরণ' : 'Punishment Details'}</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{isBn ? 'শাস্তি (ইংরেজি)' : 'Punishment (English)'}</label>
+                  <textarea name="punishment" value={form.punishment} onChange={handleChange} rows={2}
+                    className="w-full px-4 py-3 border-2 border-light-gray rounded-xl focus:border-justice-gold focus:ring-4 focus:ring-justice-gold/20 transition-all text-sm outline-none resize-none" placeholder={isBn ? 'শাস্তির বিবরণ লিখুন...' : 'Describe the punishment...'} />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{isBn ? 'শাস্তি (বাংলা)' : 'Punishment (Bengali)'}</label>
+                  <textarea name="punishment_bn" value={form.punishment_bn} onChange={handleChange} rows={2}
+                    className="w-full px-4 py-3 border-2 border-light-gray rounded-xl focus:border-justice-gold focus:ring-4 focus:ring-justice-gold/20 transition-all text-sm outline-none resize-none" placeholder={isBn ? 'শাস্তির বিবরণ বাংলায় লিখুন...' : 'Describe the punishment in Bengali...'} />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{isBn ? 'নোট (বাংলা)' : 'Notes (Bengali)'}</label>
-              <textarea name="notes_bn" value={form.notes_bn} onChange={handleChange} rows={3}
-                className="w-full px-4 py-3 border-2 border-light-gray rounded-xl focus:border-justice-gold focus:ring-4 focus:ring-justice-gold/20 transition-all text-sm outline-none resize-none" />
+
+            <div className="border-t border-light-gray pt-5">
+              <h3 className="text-sm font-bold text-gray-800 mb-3">{isBn ? 'অতিরিক্ত নোট' : 'Additional Notes'}</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{isBn ? 'নোট (ইংরেজি)' : 'Notes (English)'}</label>
+                  <textarea name="notes" value={form.notes} onChange={handleChange} rows={3}
+                    className="w-full px-4 py-3 border-2 border-light-gray rounded-xl focus:border-justice-gold focus:ring-4 focus:ring-justice-gold/20 transition-all text-sm outline-none resize-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{isBn ? 'নোট (বাংলা)' : 'Notes (Bengali)'}</label>
+                  <textarea name="notes_bn" value={form.notes_bn} onChange={handleChange} rows={3}
+                    className="w-full px-4 py-3 border-2 border-light-gray rounded-xl focus:border-justice-gold focus:ring-4 focus:ring-justice-gold/20 transition-all text-sm outline-none resize-none" />
+                </div>
+              </div>
             </div>
 
             <Button type="submit" loading={loading} variant="gold" size="lg" className="w-full" icon={<FiSave />}>

@@ -124,8 +124,12 @@ exports.refreshToken = async (req, res, next) => {
     }
 
     const accessToken = generateAccessToken(user);
+    const newRefreshToken = generateRefreshToken(user);
 
-    res.json({ success: true, data: { accessToken } });
+    user.refreshToken = newRefreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    res.json({ success: true, data: { accessToken, refreshToken: newRefreshToken } });
   } catch (error) {
     return res.status(401).json({ success: false, message: 'Invalid or expired refresh token.' });
   }

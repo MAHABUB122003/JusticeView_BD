@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiUser, FiMail, FiLock, FiArrowRight, FiShield, FiPhone } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiArrowRight, FiShield, FiPhone, FiInfo } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../ui/Button';
 
@@ -30,7 +30,14 @@ export default function Register() {
       await register(form);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || (isBn ? 'নিবন্ধন ব্যর্থ হয়েছে' : 'Registration failed'));
+      const data = err.response?.data;
+      if (data?.errors?.length) {
+        setError(data.errors.map(e => e.message || e.msg).join('. '));
+      } else if (data?.message) {
+        setError(data.message);
+      } else {
+        setError(isBn ? 'নিবন্ধন ব্যর্থ হয়েছে' : 'Registration failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -49,8 +56,8 @@ export default function Register() {
 
         <div className="bg-white rounded-2xl shadow-form p-8 border border-light-gray/60">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-court-red px-5 py-4 rounded-xl mb-6 text-sm flex items-center gap-2">
-              <span>⚠️</span> {error}
+            <div className="bg-red-50 border border-red-200 text-court-red px-5 py-4 rounded-xl mb-6 text-sm flex items-start gap-2">
+              <span>⚠️</span> <span>{error}</span>
             </div>
           )}
 
@@ -78,7 +85,7 @@ export default function Register() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('auth:password')}</label>
                 <div className="relative">
                   <FiLock className="absolute left-4 top-4 text-gray-400" />
-                  <input type="password" name="password" value={form.password} onChange={handleChange} required minLength={8} placeholder="••••••••"
+                  <input type="password" name="password" value={form.password} onChange={handleChange} required minLength={6} placeholder="••••••••"
                     className="w-full h-12 pl-12 pr-4 border-2 border-light-gray rounded-xl focus:border-justice-gold focus:ring-4 focus:ring-justice-gold/20 transition-all text-sm outline-none" />
                 </div>
               </div>
@@ -90,6 +97,11 @@ export default function Register() {
                     className="w-full h-12 pl-12 pr-4 border-2 border-light-gray rounded-xl focus:border-justice-gold focus:ring-4 focus:ring-justice-gold/20 transition-all text-sm outline-none" />
                 </div>
               </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800 flex items-start gap-2">
+              <FiInfo className="mt-0.5 flex-shrink-0" />
+              <span>{isBn ? 'পাসওয়ার্ডে কমপক্ষে ৬টি অক্ষর, একটি ছোট হাতের অক্ষর ও একটি সংখ্যা থাকতে হবে' : 'Password must be at least 6 characters, include a lowercase letter and a number'}</span>
             </div>
 
             <div>

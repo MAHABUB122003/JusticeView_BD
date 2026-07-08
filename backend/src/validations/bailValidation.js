@@ -7,7 +7,12 @@ const createBailValidation = [
   body('bailDate').isISO8601().withMessage('Valid bail date is required.'),
   body('bailAmount').optional().isFloat({ min: 0 }).withMessage('Bail amount must be positive.'),
   body('conditions').optional().isArray(),
-  body('hearingDate').optional().isISO8601(),
+  body('hearingDate').optional({ values: 'falsy' }).isISO8601().withMessage('Invalid hearing date.'),
+  body('nextHearingDate').optional({ values: 'falsy' }).isISO8601().withMessage('Invalid next hearing date.'),
+  body('lawyer').optional({ values: 'falsy' }).isMongoId().withMessage('Invalid lawyer ID.'),
+  body('judge').optional({ values: 'falsy' }).isMongoId().withMessage('Invalid judge ID.'),
+  body('punishment').optional({ values: 'falsy' }).trim(),
+  body('punishment_bn').optional({ values: 'falsy' }).trim(),
   validate,
 ];
 

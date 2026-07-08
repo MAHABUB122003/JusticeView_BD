@@ -28,7 +28,16 @@ export default function Login() {
       await login(form.email, form.password);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || (isBn ? 'ভুল ইমেইল বা পাসওয়ার্ড' : 'Invalid email or password'));
+      const data = err.response?.data;
+      if (data?.errors?.length) {
+        setError(data.errors.map(e => e.message || e.msg).join('. '));
+      } else if (data?.message) {
+        setError(data.message);
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError(isBn ? 'লগইন ব্যর্থ হয়েছে' : 'Login failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -37,7 +46,6 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-off-white to-gray-100 flex items-center justify-center px-4 py-24">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-justice-blue rounded-2xl mb-4 shadow-lg">
             <FiShield className="text-2xl text-justice-gold" />
@@ -46,11 +54,10 @@ export default function Login() {
           <p className="text-dark-gray mt-2">{t('auth:loginSubtitle')}</p>
         </div>
 
-        {/* Card */}
         <div className="bg-white rounded-2xl shadow-form p-8 border border-light-gray/60">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-court-red px-5 py-4 rounded-xl mb-6 text-sm flex items-center gap-2">
-              <span>⚠️</span> {error}
+            <div className="bg-red-50 border border-red-200 text-court-red px-5 py-4 rounded-xl mb-6 text-sm flex items-start gap-2">
+              <span>⚠️</span> <span>{error}</span>
             </div>
           )}
 

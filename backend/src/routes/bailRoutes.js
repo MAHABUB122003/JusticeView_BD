@@ -3,8 +3,9 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { roleCheck } = require('../middleware/roleCheck');
 const bailController = require('../controllers/bailController');
+const { createBailValidation } = require('../validations/bailValidation');
 
-router.post('/', authenticate, roleCheck('super_admin', 'admin', 'court_clerk'), bailController.create);
+router.post('/', authenticate, roleCheck('super_admin', 'admin', 'court_clerk'), createBailValidation, bailController.create);
 router.get('/', bailController.getAll);
 router.get('/search', bailController.search);
 router.get('/criminal/:criminalId', bailController.getByCriminal);

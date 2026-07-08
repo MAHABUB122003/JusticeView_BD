@@ -24,7 +24,6 @@ lawyerSchema.virtual('bailRecords', {
   foreignField: 'lawyer',
 });
 
-lawyerSchema.index({ barCouncilNumber: 1 });
 lawyerSchema.index({ name: 1 });
 
 module.exports = mongoose.model('Lawyer', lawyerSchema);

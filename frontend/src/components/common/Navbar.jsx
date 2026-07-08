@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiSearch, FiUser, FiLogOut, FiSettings, FiChevronDown, FiMenu, FiX, FiHome, FiInfo, FiMail, FiGrid, FiShield, FiBookOpen, FiBook } from 'react-icons/fi';
+import { FiSearch, FiUser, FiLogOut, FiSettings, FiChevronDown, FiMenu, FiX, FiHome, FiInfo, FiMail, FiGrid, FiShield, FiBookOpen, FiBook, FiCamera, FiFileText, FiPackage, FiCalendar } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import LanguageToggle from './LanguageToggle';
 import SearchBar from '../ui/SearchBar';
@@ -22,6 +22,7 @@ export default function Navbar() {
   const navLinks = [
     { to: '/', label: t('nav.home'), icon: <FiHome /> },
     { to: '/search', label: t('nav.search'), icon: <FiSearch /> },
+    { to: '/face-search', label: 'Face Search', icon: <FiCamera /> },
     { to: '/directory', label: 'Directory', icon: <FiBook /> },
     { to: '/about', label: t('nav.about'), icon: <FiInfo /> },
     { to: '/contact', label: t('nav.contact'), icon: <FiMail /> },
@@ -96,14 +97,33 @@ export default function Navbar() {
                         <FiSettings className="text-justice-gold" /> {t('nav.settings')}
                       </Link>
                       {isPolice && (
-                        <Link to="/police/arrest" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
-                          <FiShield className="text-justice-gold" /> {t('nav.create', 'New Arrest')}
-                        </Link>
+                        <>
+                          <Link to="/police/arrest" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                            <FiShield className="text-justice-gold" /> {t('nav.arrest', 'Arrest Entry')}
+                          </Link>
+                          <Link to="/police/charge-sheet" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                            <FiFileText className="text-justice-gold" /> {t('nav.chargeSheet', 'Charge Sheet')}
+                          </Link>
+                          <Link to="/police/evidence" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                            <FiPackage className="text-justice-gold" /> {t('nav.evidence', 'Evidence')}
+                          </Link>
+                        </>
                       )}
                       {isCourt && (
-                        <Link to="/court/bail" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
-                          <FiBookOpen className="text-justice-gold" /> {t('nav.create', 'Bail Entry')}
-                        </Link>
+                        <>
+                          <Link to="/court/bail" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                            <FiBookOpen className="text-justice-gold" /> {t('nav.bail', 'Bail Entry')}
+                          </Link>
+                          <Link to="/court/judgment" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                            <FiFileText className="text-justice-gold" /> {t('nav.judgment', 'Judgment')}
+                          </Link>
+                          <Link to="/court/punishment" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                            <FiShield className="text-justice-gold" /> {t('nav.punishment', 'Punishment')}
+                          </Link>
+                          <Link to="/court/hearing" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">
+                            <FiCalendar className="text-justice-gold" /> {t('nav.hearing', 'Hearing')}
+                          </Link>
+                        </>
                       )}
                       {(isAdmin) && (
                         <Link to="/admin/users" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-off-white transition-colors">

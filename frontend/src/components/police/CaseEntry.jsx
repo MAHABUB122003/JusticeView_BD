@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiBook, FiSave, FiUsers, FiSearch, FiX, FiShield, FiMapPin } from 'react-icons/fi';
+import { FiBook, FiSave, FiUsers, FiSearch, FiX, FiShield, FiMapPin, FiHome } from 'react-icons/fi';
 import { caseService } from '../../services/caseService';
 import { criminalService } from '../../services/criminalService';
 import { policeOfficerService } from '../../services/policeOfficerService';
 import { thanaService } from '../../services/thanaService';
 import { districtService } from '../../services/divisionService';
+import { courtService } from '../../services/courtService';
 import { getPhotoUrl } from '../../services/api';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -108,8 +109,8 @@ export default function CaseEntry() {
   const isBn = i18n.language === 'bn';
 
   const [form, setForm] = useState({
-    caseNumber: '', criminal: searchParams.get('criminalId') || '',
-    arrestingOfficer: '', thana: '',
+    criminal: searchParams.get('criminalId') || '',
+    arrestingOfficer: '', thana: '', court: '',
     arrestDate: '', arrestTime: '', sectionLaw: '', description: '', description_bn: '',
   });
   const [loading, setLoading] = useState(false);
@@ -126,9 +127,12 @@ export default function CaseEntry() {
 
   const [districts, setDistricts] = useState([]);
   const [thanas, setThanas] = useState([]);
+  const [courts, setCourts] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [loadingThanas, setLoadingThanas] = useState(false);
+  const [loadingCourts, setLoadingCourts] = useState(false);
+  const [nextCaseNumber, setNextCaseNumber] = useState('');
 
   const criminalIdFromUrl = searchParams.get('criminalId');
 
@@ -141,27 +145,43 @@ export default function CaseEntry() {
   }, [criminalIdFromUrl]);
 
   useEffect(() => {
+    if (selectedCriminal) {
+      const next = (selectedCriminal.totalCases || 0) + 1;
+      const shortId = selectedCriminal._id.toString().slice(-8).toUpperCase();
+      setNextCaseNumber(`${shortId}-${next}`);
+    } else {
+      setNextCaseNumber('');
+    }
+  }, [selectedCriminal]);
+
+  useEffect(() => {
     setLoadingDistricts(true);
     districtService.getAll()
       .then(res => setDistricts(res.data.data || []))
-      .catch(() => {})
+      .catch(err => console.error('District fetch error:', err.response?.data || err.message))
       .finally(() => setLoadingDistricts(false));
   }, []);
 
   useEffect(() => {
-    if (!selectedDistrict) { setThanas([]); return; }
+    if (!selectedDistrict) { setThanas([]); setCourts([]); return; }
     setLoadingThanas(true);
+    setLoadingCourts(true);
     thanaService.getByDistrict(selectedDistrict)
       .then(res => setThanas(res.data.data || []))
-      .catch(() => setThanas([]))
+      .catch(err => { console.error('Thana fetch error:', err.response?.data || err.message); setThanas([]); })
       .finally(() => setLoadingThanas(false));
+    courtService.getByDistrict(selectedDistrict)
+      .then(res => setCourts(res.data.data || []))
+      .catch(err => { console.error('Court fetch error:', err.response?.data || err.message); setCourts([]); })
+      .finally(() => setLoadingCourts(false));
   }, [selectedDistrict]);
 
   const handleDistrictChange = (e) => {
     const districtId = e.target.value;
     setSelectedDistrict(districtId);
-    setForm(prev => ({ ...prev, thana: '' }));
+    setForm(prev => ({ ...prev, thana: '', court: '' }));
     clearFieldError('thana');
+    clearFieldError('court');
   };
 
   const handleThanaChange = (e) => {
@@ -177,8 +197,8 @@ export default function CaseEntry() {
     try {
       await caseService.create(form);
       setMessage(isBn ? 'মামলা সফলভাবে তৈরি হয়েছে' : 'Case created successfully');
-      setForm({ caseNumber: '', criminal: '', arrestingOfficer: '', thana: '', arrestDate: '', arrestTime: '', sectionLaw: '', description: '', description_bn: '' });
-      setSelectedCriminal(null); setSelectedOfficer(null); setSelectedDistrict(''); setThanas([]);
+      setForm({ criminal: '', arrestingOfficer: '', thana: '', court: '', arrestDate: '', arrestTime: '', sectionLaw: '', description: '', description_bn: '' });
+      setSelectedCriminal(null); setSelectedOfficer(null); setSelectedDistrict(''); setThanas([]); setCourts([]); setNextCaseNumber('');
     } catch (err) {
       const data = err.response?.data;
       if (data?.errors && Array.isArray(data.errors)) {
@@ -237,12 +257,12 @@ export default function CaseEntry() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid md:grid-cols-2 gap-5">
-              {/* Case Number */}
+              {/* Case Number (auto-generated) */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">{isBn ? 'মামলা নম্বর' : 'Case Number'} *</label>
-                <input type="text" name="caseNumber" value={form.caseNumber} onChange={handleChange} required
-                  className={`w-full h-12 px-4 border-2 rounded-xl focus:ring-4 transition-all text-sm outline-none ${fieldErrors.caseNumber ? 'border-court-red focus:ring-red-200' : 'border-light-gray focus:border-justice-gold focus:ring-justice-gold/20'}`} />
-                {fieldErrors.caseNumber && <p className="text-xs text-court-red mt-1">{fieldErrors.caseNumber}</p>}
+                <div className={`w-full h-12 px-4 border-2 rounded-xl flex items-center text-sm ${nextCaseNumber ? 'bg-green-50 border-green-300 text-success-green font-bold' : 'bg-gray-50 border-gray-200 text-dark-gray'}`}>
+                  {nextCaseNumber || (isBn ? 'একটি অপরাধী নির্বাচন করুন' : 'Select a criminal')}
+                </div>
               </div>
 
               {/* Criminal Search */}
@@ -336,6 +356,26 @@ export default function CaseEntry() {
                   ))}
                 </select>
                 {fieldErrors.thana && <p className="text-xs text-court-red mt-1">{fieldErrors.thana}</p>}
+              </div>
+
+              {/* Court */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">{isBn ? 'আদালত' : 'Court'}</label>
+                <div className="relative">
+                  <FiHome className="absolute left-4 top-4 text-gray-400" />
+                  <select
+                    value={form.court}
+                    onChange={(e) => { setForm(prev => ({ ...prev, court: e.target.value })); clearFieldError('court'); }}
+                    disabled={!selectedDistrict}
+                    className={`w-full h-12 pl-12 pr-4 border-2 rounded-xl focus:ring-4 transition-all text-sm outline-none bg-white ${fieldErrors.court ? 'border-court-red focus:ring-red-200' : 'border-light-gray focus:border-justice-gold focus:ring-justice-gold/20'} ${!selectedDistrict ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <option value="">{loadingCourts ? (isBn ? 'লোড হচ্ছে...' : 'Loading...') : (selectedDistrict && courts.length === 0 ? (isBn ? 'কোন আদালত নেই' : 'No courts available') : (isBn ? 'আদালত নির্বাচন করুন' : 'Select Court'))}</option>
+                    {courts.map(c => (
+                      <option key={c._id} value={c._id}>{isBn && c.name_bn ? c.name_bn : c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                {fieldErrors.court && <p className="text-xs text-court-red mt-1">{fieldErrors.court}</p>}
               </div>
 
               {/* Arrest Date */}

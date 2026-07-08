@@ -6,7 +6,7 @@ const courtSchema = new mongoose.Schema({
   district: { type: mongoose.Schema.Types.ObjectId, ref: 'District', required: true },
   courtType: {
     type: String,
-    enum: ['CMM Court', 'District Judge Court', 'Magistrate Court', 'Sessions Court'],
+    enum: ['CMM Court', 'District Judge Court', 'Chief Judicial Magistrate Court', 'Magistrate Court', 'Sessions Court'],
     required: true,
   },
   address: { type: String, trim: true },

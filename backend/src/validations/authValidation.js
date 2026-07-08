@@ -5,11 +5,9 @@ const registerValidation = [
   body('name').trim().notEmpty().withMessage('Name is required.'),
   body('email').trim().isEmail().withMessage('Valid email is required.').normalizeEmail(),
   body('password')
-    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters.')
-    .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter.')
+    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters.')
     .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter.')
-    .matches(/[0-9]/).withMessage('Password must contain at least one number.')
-    .matches(/[!@#$%^&*(),.?":{}|<>]/).withMessage('Password must contain at least one special character.'),
+    .matches(/[0-9]/).withMessage('Password must contain at least one number.'),
   body('phone').optional().trim(),
   validate,
 ];

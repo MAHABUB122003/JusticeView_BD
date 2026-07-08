@@ -5,7 +5,13 @@ const { getPagination, getPaginationResponse, getSortOptions, buildSearchRegex }
 
 exports.create = async (req, res, next) => {
   try {
-    const data = { ...req.body, createdBy: req.user._id };
+    const cleaned = { ...req.body };
+    for (const key of ['lawyer', 'judge', 'hearingDate', 'nextHearingDate', 'notes', 'notes_bn', 'conditions']) {
+      if (cleaned[key] === '' || cleaned[key] === null || cleaned[key] === undefined) {
+        delete cleaned[key];
+      }
+    }
+    const data = { ...cleaned, createdBy: req.user._id };
 
     const bailRecord = await BailRecord.create(data);
 

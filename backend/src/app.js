@@ -35,6 +35,7 @@ app.use('/api/', generalLimiter);
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/face-models', express.static(path.join(__dirname, '../face-models')));
 
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -51,6 +52,13 @@ app.use('/api/bail-records', require('./routes/bailRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/professionals', require('./routes/professionalRoutes'));
+app.use('/api/image-search', require('./routes/imageSearchRoutes'));
+app.use('/api/judgments', require('./routes/judgmentRoutes'));
+app.use('/api/punishments', require('./routes/punishmentRoutes'));
+app.use('/api/evidence', require('./routes/evidenceRoutes'));
+app.use('/api/hearings', require('./routes/hearingRoutes'));
+app.use('/api/charge-sheets', require('./routes/chargeSheetRoutes'));
+app.use('/api/appeals', require('./routes/appealRoutes'));
 
 // Health check
 app.get('/', (req, res) => {

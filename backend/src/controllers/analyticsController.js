@@ -1,6 +1,11 @@
 const Case = require('../models/Case');
 const Criminal = require('../models/Criminal');
 const BailRecord = require('../models/BailRecord');
+const Judgment = require('../models/Judgment');
+const Punishment = require('../models/Punishment');
+const Hearing = require('../models/Hearing');
+const ChargeSheet = require('../models/ChargeSheet');
+const Evidence = require('../models/Evidence');
 const Lawyer = require('../models/Lawyer');
 const Judge = require('../models/Judge');
 const PoliceOfficer = require('../models/PoliceOfficer');
@@ -9,6 +14,11 @@ const District = require('../models/District');
 
 exports.getDashboard = async (req, res, next) => {
   try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
     const [
       totalCases,
       totalCriminals,
@@ -20,6 +30,15 @@ exports.getDashboard = async (req, res, next) => {
       pendingCases,
       trialCases,
       disposedCases,
+      totalJudgments,
+      pendingJudgments,
+      totalPunishments,
+      totalHearings,
+      todayHearings,
+      chargeSheetsFiled,
+      evidenceCollected,
+      todayArrests,
+      weekArrests,
     ] = await Promise.all([
       Case.countDocuments(),
       Criminal.countDocuments(),
@@ -31,6 +50,15 @@ exports.getDashboard = async (req, res, next) => {
       Case.countDocuments({ status: 'pending' }),
       Case.countDocuments({ status: 'trial' }),
       Case.countDocuments({ status: 'disposed' }),
+      Judgment.countDocuments(),
+      Judgment.countDocuments({ status: 'pending' }),
+      Punishment.countDocuments(),
+      Hearing.countDocuments(),
+      Hearing.countDocuments({ hearingDate: { $gte: today } }),
+      ChargeSheet.countDocuments(),
+      Evidence.countDocuments(),
+      Criminal.countDocuments({ createdAt: { $gte: today } }),
+      Criminal.countDocuments({ createdAt: { $gte: weekAgo } }),
     ]);
 
     res.json({
@@ -46,6 +74,15 @@ exports.getDashboard = async (req, res, next) => {
         pendingCases,
         trialCases,
         disposedCases,
+        totalJudgments,
+        pendingJudgments,
+        totalPunishments,
+        totalHearings,
+        todayHearings,
+        chargeSheetsFiled,
+        evidenceCollected,
+        todayArrests,
+        weekArrests,
       },
     });
   } catch (error) {

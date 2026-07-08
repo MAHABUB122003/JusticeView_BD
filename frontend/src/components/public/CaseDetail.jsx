@@ -89,8 +89,8 @@ export default function CaseDetail() {
               </p>
             </Card>
 
-            {/* Bail Records */}
-            <Card title={isBn ? 'জামিনের রেকর্ড' : 'Bail Records'} borderTop>
+            {/* Bail & Punishment Records */}
+            <Card title={isBn ? 'জামিন ও শাস্তির রেকর্ড' : 'Bail & Punishment Records'} borderTop>
               {caseData.bailRecords?.length > 0 ? (
                 <div className="space-y-3">
                   {caseData.bailRecords.map((b) => (
@@ -100,11 +100,17 @@ export default function CaseDetail() {
                           <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-justice-gold flex-shrink-0"><FiBookOpen /></div>
                           <div>
                             <span className="font-bold text-gray-900">{new Date(b.bailDate).toLocaleDateString()}</span>
-                            <div className="flex flex-wrap gap-3 mt-1 text-xs text-dark-gray">
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-dark-gray">
                               {b.lawyer && <span>⚖️ {isBn ? 'উকিল' : 'Lawyer'}: <span className="font-medium">{b.lawyer.name}</span></span>}
                               {b.judge && <span>🏛️ {isBn ? 'বিচারক' : 'Judge'}: <span className="font-medium">{b.judge.name}</span></span>}
                               {b.nextHearingDate && <span>📅 {isBn ? 'পরবর্তী শুনানি' : 'Next Hearing'}: {new Date(b.nextHearingDate).toLocaleDateString()}</span>}
                             </div>
+                            {b.punishment && (
+                              <div className="mt-2 pt-2 border-t border-light-gray/40">
+                                <span className="text-xs font-bold text-court-red">{isBn ? 'শাস্তি' : 'Punishment'}: </span>
+                                <span className="text-sm text-gray-700">{isBn && b.punishment_bn ? b.punishment_bn : b.punishment}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         {b.bailAmount > 0 && <span className="font-bold text-success-green text-lg">৳{b.bailAmount.toLocaleString()}</span>}
