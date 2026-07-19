@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAF - Attack Logs</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="logo-text">
+                <h2>WAF</h2>
+                <span>Secure Firewall</span>
+            </div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-label">Main</div>
+        <a href="/admin/dashboard"><span class="nav-icon"><i class="fas fa-chart-pie"></i></span><span>Dashboard</span></a>
+        <a href="/admin/logs" class="active"><span class="nav-icon"><i class="fas fa-list"></i></span><span>Logs</span></a>
+        <a href="/admin/rules"><span class="nav-icon"><i class="fas fa-shield"></i></span><span>Rules</span></a>
+        <div class="nav-label">Management</div>
+        <a href="/admin/clients"><span class="nav-icon"><i class="fas fa-globe"></i></span><span>Clients</span></a>
+        <a href="/admin/blacklist"><span class="nav-icon"><i class="fas fa-ban"></i></span><span>Blacklist</span></a>
+        <a href="/admin/settings"><span class="nav-icon"><i class="fas fa-cog"></i></span><span>Settings</span></a>
+        <a href="/connect"><span class="nav-icon"><i class="fas fa-link"></i></span><span>Connect</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-right-from-bracket"></i><span>Logout</span></button>
+    </div>
+</aside>
+
+<div class="main-content">
+    <header class="header">
+        <div class="header-left">
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle sidebar"><i class="fas fa-bars"></i></button>
+            <div>
+                <h1>Attack Logs</h1>
+                <div class="breadcrumb">WAF / <span>Logs</span></div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="clock" id="liveClock">{{ now.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+            <div style="position:relative">
+                <button class="notification-btn" id="notificationBtn" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="dot"></span>
+                </button>
+                <div class="notification-panel" id="notificationPanel">
+                    <div class="panel-header"><span>Notifications</span><span style="font-size:11px;color:#94a3b8;font-weight:400">3 new</span></div>
+                    <div class="panel-item"><div style="color:#ef4444"><i class="fas fa-bug"></i></div><div style="font-size:13px">SQL Injection blocked from 192.168.1.100</div></div>
+                    <div class="panel-item"><div style="color:#f59e0b"><i class="fas fa-bug"></i></div><div style="font-size:13px">XSS attack detected on /search</div></div>
+                    <div class="panel-item"><div style="color:#10b981"><i class="fas fa-check-circle"></i></div><div style="font-size:13px">New client "example.com" connected</div></div>
+                </div>
+            </div>
+            <div style="position:relative">
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="avatar">A</div>
+                    <span class="user-name">Admin</span>
+                    <i class="fas fa-chevron-down" style="font-size:10px;color:#94a3b8"></i>
+                </div>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="/admin/settings"><i class="fas fa-user"></i> Profile</a>
+                    <a href="/admin/settings"><i class="fas fa-cog"></i> Settings</a>
+                    <div class="divider"></div>
+                    <button onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+        <div class="filters-bar">
+            <form id="filterForm" class="filter-form">
+                <input type="text" name="search" placeholder="Search IP, URL, Attack..." value="{{ request.args.get('search', '') }}">
+                <input type="text" name="ip" placeholder="Filter by IP" value="{{ request.args.get('ip', '') }}">
+                <select name="attack_type">
+                    <option value="">All Attack Types</option>
+                    <option value="SQL Injection" {% if request.args.get('attack_type') == 'SQL Injection' %}selected{% endif %}>SQL Injection</option>
+                    <option value="XSS" {% if request.args.get('attack_type') == 'XSS' %}selected{% endif %}>XSS</option>
+                    <option value="LFI" {% if request.args.get('attack_type') == 'LFI' %}selected{% endif %}>LFI</option>
+                    <option value="Command Injection" {% if request.args.get('attack_type') == 'Command Injection' %}selected{% endif %}>Command Injection</option>
+                    <option value="CSRF" {% if request.args.get('attack_type') == 'CSRF' %}selected{% endif %}>CSRF</option>
+                </select>
+                <input type="date" name="date_from" value="{{ request.args.get('date_from', '') }}">
+                <input type="date" name="date_to" value="{{ request.args.get('date_to', '') }}">
+                <button type="submit" class="btn-filter">Filter</button>
+                <button type="button" class="btn-export" onclick="exportCSV()">Export CSV</button>
+            </form>
+            <div class="log-actions-bar">
+                <button class="btn-clean-logs" onclick="cleanLogsOlder(7)" title="Delete logs older than 7 days">
+                    <i class="fas fa-clock"></i> Clean 7+ Days
+                </button>
+                <button class="btn-clean-logs" onclick="cleanLogsOlder(30)" title="Delete logs older than 30 days">
+                    <i class="fas fa-calendar"></i> Clean 30+ Days
+                </button>
+                <button class="btn-clean-logs danger" onclick="cleanAllLogs()" title="Delete ALL logs">
+                    <i class="fas fa-trash"></i> Clean All Logs
+                </button>
+            </div>
+        </div>
+
+        <div class="logs-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>IP</th>
+                        <th>URL</th>
+                        <th>Attack Type</th>
+                        <th>Confidence</th>
+                        <th>Status</th>
+                        <th>Timestamp</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs.logs %}
+                    <tr onclick="toggleDetails('details-{{ loop.index }}')">
+                        <td>{{ (page - 1) * per_page + loop.index }}</td>
+                        <td><code>{{ log.ip }}</code></td>
+                        <td>{{ log.url[:50] }}{% if log.url|length > 50 %}...{% endif %}</td>
+                        <td><span class="badge danger">{{ log.attack_type }}</span></td>
+                        <td>{{ "%.2f"|format(log.confidence) }}</td>
+                        <td><span class="badge {% if log.status == 'blocked' %}danger{% else %}success{% endif %}">{{ log.status }}</span></td>
+                        <td>{{ log.timestamp }}</td>
+                        <td>
+                            <button class="btn-small" onclick="event.stopPropagation(); viewDetails('{{ log.id }}')">Details</button>
+                        </td>
+                    </tr>
+                    <tr id="details-{{ loop.index }}" class="details-row" style="display:none;">
+                        <td colspan="8">
+                            <div class="log-details">
+                                <p><strong>IP:</strong> {{ log.ip }}</p>
+                                <p><strong>URL:</strong> {{ log.url }}</p>
+                                <p><strong>Method:</strong> {{ log.method }}</p>
+                                <p><strong>Attack Type:</strong> {{ log.attack_type }}</p>
+                                <p><strong>Confidence:</strong> {{ "%.2f"|format(log.confidence) }}</p>
+                                <p><strong>Status:</strong> {{ log.status }}</p>
+                                {% if log.user_agent %}<p><strong>User-Agent:</strong> {{ log.user_agent }}</p>{% endif %}
+                                {% if log.referer %}<p><strong>Referer:</strong> {{ log.referer }}</p>{% endif %}
+                                {% if log.rule_matched %}<p><strong>Rule Matched:</strong> {{ log.rule_matched }}</p>{% endif %}
+                                {% if log.request_body %}<p><strong>Request Body:</strong> <code>{{ log.request_body[:200] }}</code></p>{% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align:center;color:#6c757d;padding:40px;">No logs found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination">
+            {% if logs.total_pages > 1 %}
+            <div class="page-info">
+                Page {{ page }} of {{ logs.total_pages }} ({{ logs.total }} total records)
+            </div>
+            <div class="page-buttons">
+                {% if page > 1 %}
+                <a href="?page={{ page - 1 }}&search={{ request.args.get('search', '') }}&ip={{ request.args.get('ip', '') }}&attack_type={{ request.args.get('attack_type', '') }}" class="btn-page">Previous</a>
+                {% endif %}
+                {% for p in range(1, logs.total_pages + 1) %}
+                    {% if p >= page - 2 and p <= page + 2 %}
+                    <a href="?page={{ p }}&search={{ request.args.get('search', '') }}&ip={{ request.args.get('ip', '') }}&attack_type={{ request.args.get('attack_type', '') }}" class="btn-page {% if p == page %}active{% endif %}">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if page < logs.total_pages %}
+                <a href="?page={{ page + 1 }}&search={{ request.args.get('search', '') }}&ip={{ request.args.get('ip', '') }}&attack_type={{ request.args.get('attack_type', '') }}" class="btn-page">Next</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function toggleDetails(id) {
+            const row = document.getElementById(id);
+            row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+        }
+
+        function viewDetails(id) {
+            const row = document.getElementById('details-' + id);
+            if (row) row.style.display = 'table-row';
+        }
+
+        function exportCSV() {
+            const params = new URLSearchParams(window.location.search);
+            params.set('export', 'csv');
+            window.location.href = '/api/admin/logs?' + params.toString();
+        }
+
+        function cleanLogsOlder(days) {
+            if (!confirm('Delete all logs older than ' + days + ' days? This cannot be undone.')) return;
+            fetch('/api/admin/clean_logs', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({days: days})
+            }).then(r => r.json()).then(data => {
+                alert(data.message);
+                location.reload();
+            });
+        }
+
+        function cleanAllLogs() {
+            if (!confirm('WARNING: This will delete ALL attack logs and request logs. This cannot be undone!')) return;
+            if (!confirm('Are you absolutely sure? Click OK to confirm.')) return;
+            fetch('/api/admin/clean_all_logs', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            }).then(r => r.json()).then(data => {
+                alert(data.message);
+                location.reload();
+            });
+        }
+    </script>
+    <script src="/static/js/admin.js"></script>
+
+    <style>
+        .filters-bar { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .filter-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .filter-form input, .filter-form select { padding: 10px 12px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 14px; }
+        .filter-form input:focus, .filter-form select:focus { outline: none; border-color: #667eea; }
+        .btn-filter { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        .btn-export { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        .log-actions-bar { display: flex; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef; }
+        .btn-clean-logs { padding: 8px 16px; background: #f8f9fa; color: #495057; border: 1px solid #e9ecef; border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        .btn-clean-logs:hover { background: #e9ecef; }
+        .btn-clean-logs.danger { color: #dc3545; border-color: #dc3545; }
+        .btn-clean-logs.danger:hover { background: #dc3545; color: white; }
+        .btn-small { padding: 5px 12px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .logs-table { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
+        .logs-table table { width: 100%; border-collapse: collapse; }
+        .logs-table th { text-align: left; padding: 12px 15px; background: #f8f9fa; color: #495057; font-weight: 600; }
+        .logs-table td { padding: 10px 15px; border-bottom: 1px solid #e9ecef; }
+        .logs-table tbody tr:hover { background: #f8f9fa; cursor: pointer; }
+        .log-details { padding: 15px; background: #f8f9fa; border-radius: 8px; }
+        .log-details p { margin: 5px 0; }
+        .details-row td { padding: 0; }
+        .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 15px; background: white; border-radius: 12px; }
+        .page-info { color: #6c757d; font-size: 14px; }
+        .page-buttons { display: flex; gap: 5px; }
+        .btn-page { padding: 8px 14px; background: #f8f9fa; color: #495057; text-decoration: none; border-radius: 6px; border: 1px solid #e9ecef; }
+        .btn-page.active { background: #667eea; color: white; border-color: #667eea; }
+        .btn-page:hover { background: #e9ecef; }
+    </style>
+</body>
+</html>

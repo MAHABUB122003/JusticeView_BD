@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAF - Blacklist</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="logo-text">
+                <h2>WAF</h2>
+                <span>Secure Firewall</span>
+            </div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-label">Main</div>
+        <a href="/admin/dashboard"><span class="nav-icon"><i class="fas fa-chart-pie"></i></span><span>Dashboard</span></a>
+        <a href="/admin/logs"><span class="nav-icon"><i class="fas fa-list"></i></span><span>Logs</span></a>
+        <a href="/admin/rules"><span class="nav-icon"><i class="fas fa-shield"></i></span><span>Rules</span></a>
+        <div class="nav-label">Management</div>
+        <a href="/admin/clients"><span class="nav-icon"><i class="fas fa-globe"></i></span><span>Clients</span></a>
+        <a href="/admin/blacklist" class="active"><span class="nav-icon"><i class="fas fa-ban"></i></span><span>Blacklist</span></a>
+        <a href="/admin/settings"><span class="nav-icon"><i class="fas fa-cog"></i></span><span>Settings</span></a>
+        <a href="/connect"><span class="nav-icon"><i class="fas fa-link"></i></span><span>Connect</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-right-from-bracket"></i><span>Logout</span></button>
+    </div>
+</aside>
+
+<div class="main-content">
+    <header class="header">
+        <div class="header-left">
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle sidebar"><i class="fas fa-bars"></i></button>
+            <div>
+                <h1>Blacklist Management</h1>
+                <div class="breadcrumb">WAF / <span>Blacklist</span></div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="clock" id="liveClock">{{ now.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+            <div style="position:relative">
+                <button class="notification-btn" id="notificationBtn" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="dot"></span>
+                </button>
+                <div class="notification-panel" id="notificationPanel">
+                    <div class="panel-header"><span>Notifications</span><span style="font-size:11px;color:#94a3b8;font-weight:400">3 new</span></div>
+                    <div class="panel-item"><div style="color:#ef4444"><i class="fas fa-bug"></i></div><div style="font-size:13px">SQL Injection blocked from 192.168.1.100</div></div>
+                    <div class="panel-item"><div style="color:#f59e0b"><i class="fas fa-bug"></i></div><div style="font-size:13px">XSS attack detected on /search</div></div>
+                    <div class="panel-item"><div style="color:#10b981"><i class="fas fa-check-circle"></i></div><div style="font-size:13px">New client "example.com" connected</div></div>
+                </div>
+            </div>
+            <div style="position:relative">
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="avatar">A</div>
+                    <span class="user-name">Admin</span>
+                    <i class="fas fa-chevron-down" style="font-size:10px;color:#94a3b8"></i>
+                </div>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="/admin/settings"><i class="fas fa-user"></i> Profile</a>
+                    <a href="/admin/settings"><i class="fas fa-cog"></i> Settings</a>
+                    <div class="divider"></div>
+                    <button onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+        <div class="action-bar">
+            <button class="btn-primary" onclick="showAddBlacklistModal()">+ Block IP</button>
+        </div>
+
+        <div class="blacklist-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>Reason</th>
+                        <th>Type</th>
+                        <th>Source</th>
+                        <th>Blocked At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in blacklist %}
+                    <tr>
+                        <td><code>{{ entry.ip }}</code></td>
+                        <td>{{ entry.reason }}</td>
+                        <td><span class="badge {% if entry.type == 'permanent' %}danger{% else %}warning{% endif %}">{{ entry.type }}</span></td>
+                        <td><span class="badge {% if entry.auto_blocked %}warning{% else %}success{% endif %}">{% if entry.auto_blocked %}Auto{% else %}Manual{% endif %}</span></td>
+                        <td>{{ entry.blocked_at }}</td>
+                        <td>
+                            <button class="btn-small btn-delete" onclick="unblockIP('{{ entry.ip }}')">Unblock</button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align:center;color:#6c757d;padding:40px;">No IPs blacklisted</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="blacklistModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Block IP Address</h2>
+            <form id="blacklistForm">
+                <div class="form-group">
+                    <label>IP Address</label>
+                    <input type="text" id="blockIP" required placeholder="e.g., 192.168.1.100">
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <input type="text" id="blockReason" required placeholder="e.g., Suspicious activity detected">
+                </div>
+                <div class="form-group">
+                    <label>Block Type</label>
+                    <select id="blockType">
+                        <option value="permanent">Permanent</option>
+                        <option value="temporary">Temporary</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Block IP</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showAddBlacklistModal() {
+            document.getElementById('blacklistForm').reset();
+            document.getElementById('blacklistModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('blacklistModal').style.display = 'none';
+        }
+
+        document.getElementById('blacklistForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = {
+                ip: document.getElementById('blockIP').value,
+                reason: document.getElementById('blockReason').value,
+                type: document.getElementById('blockType').value
+            };
+            fetch('/api/admin/blacklist', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(() => window.location.reload());
+        });
+
+        function unblockIP(ip) {
+            if (confirm(`Unblock IP ${ip}?`)) {
+                fetch(`/api/admin/blacklist?ip=${encodeURIComponent(ip)}`, {method: 'DELETE'})
+                    .then(r => r.json())
+                    .then(() => window.location.reload());
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('blacklistModal')) closeModal();
+        }
+    </script>
+    <script src="/static/js/admin.js"></script>
+
+    <style>
+        .action-bar { margin-bottom: 20px; }
+        .btn-primary { padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600; }
+        .blacklist-table { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
+        .blacklist-table table { width: 100%; border-collapse: collapse; }
+        .blacklist-table th { text-align: left; padding: 12px 15px; background: #f8f9fa; color: #495057; }
+        .blacklist-table td { padding: 12px 15px; border-bottom: 1px solid #e9ecef; }
+        .blacklist-table td code { font-family: monospace; }
+        .badge.warning { background: #fff3cd; color: #e67e22; }
+        .btn-small { padding: 5px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 500px; max-width: 90%; }
+        .close { float: right; font-size: 28px; cursor: pointer; }
+        .modal-content .form-group { margin-bottom: 15px; }
+        .modal-content label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .modal-content input, .modal-content select { width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; box-sizing: border-box; }
+    </style>
+</body>
+</html>

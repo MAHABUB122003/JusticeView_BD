@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Website - WAF</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="logo-text">
+                <h2>WAF</h2>
+                <span>Secure Firewall</span>
+            </div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-label">Main</div>
+        <a href="/admin/dashboard"><span class="nav-icon"><i class="fas fa-chart-pie"></i></span><span>Dashboard</span></a>
+        <a href="/admin/logs"><span class="nav-icon"><i class="fas fa-list"></i></span><span>Logs</span></a>
+        <a href="/admin/rules"><span class="nav-icon"><i class="fas fa-shield"></i></span><span>Rules</span></a>
+        <div class="nav-label">Management</div>
+        <a href="/admin/clients"><span class="nav-icon"><i class="fas fa-globe"></i></span><span>Clients</span></a>
+        <a href="/admin/blacklist"><span class="nav-icon"><i class="fas fa-ban"></i></span><span>Blacklist</span></a>
+        <a href="/admin/settings"><span class="nav-icon"><i class="fas fa-cog"></i></span><span>Settings</span></a>
+        <a href="/connect" class="active"><span class="nav-icon"><i class="fas fa-link"></i></span><span>Connect</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-right-from-bracket"></i><span>Logout</span></button>
+    </div>
+</aside>
+
+<div class="main-content">
+    <header class="header">
+        <div class="header-left">
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle sidebar"><i class="fas fa-bars"></i></button>
+            <div>
+                <h1>Website Connection</h1>
+                <div class="breadcrumb">WAF / <span>Connect</span></div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="clock" id="liveClock">{{ now.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+            <div style="position:relative">
+                <button class="notification-btn" id="notificationBtn" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="dot"></span>
+                </button>
+                <div class="notification-panel" id="notificationPanel">
+                    <div class="panel-header"><span>Notifications</span><span style="font-size:11px;color:#94a3b8;font-weight:400">3 new</span></div>
+                    <div class="panel-item"><div style="color:#ef4444"><i class="fas fa-bug"></i></div><div style="font-size:13px">SQL Injection blocked from 192.168.1.100</div></div>
+                    <div class="panel-item"><div style="color:#f59e0b"><i class="fas fa-bug"></i></div><div style="font-size:13px">XSS attack detected on /search</div></div>
+                    <div class="panel-item"><div style="color:#10b981"><i class="fas fa-check-circle"></i></div><div style="font-size:13px">New client "example.com" connected</div></div>
+                </div>
+            </div>
+            <div style="position:relative">
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="avatar">A</div>
+                    <span class="user-name">Admin</span>
+                    <i class="fas fa-chevron-down" style="font-size:10px;color:#94a3b8"></i>
+                </div>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="/admin/settings"><i class="fas fa-user"></i> Profile</a>
+                    <a href="/admin/settings"><i class="fas fa-cog"></i> Settings</a>
+                    <div class="divider"></div>
+                    <button onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="connect-wrapper">
+
+        <div class="connect-hero">
+            <div class="hero-icon"><i class="fas fa-shield-halved"></i></div>
+            <h2>Connect Your Website to SecureWAF</h2>
+            <p>Protect your website from SQL injection, XSS, and other attacks in minutes. Choose the integration method that fits your stack.</p>
+        </div>
+
+        <div class="flow-diagram">
+            <div class="flow-step">
+                <div class="flow-node visitor"><i class="fas fa-user"></i><span>Visitor</span></div>
+            </div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="flow-step">
+                <div class="flow-node server"><i class="fas fa-server"></i><span>Your Server</span></div>
+            </div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="flow-step">
+                <div class="flow-node waf"><i class="fas fa-shield-halved"></i><span>WAF Engine</span></div>
+            </div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="flow-step">
+                <div class="flow-node decision">
+                    <div class="decision-branch">
+                        <div class="branch-allow"><i class="fas fa-check"></i> Allow</div>
+                        <div class="branch-block"><i class="fas fa-ban"></i> Block</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="methods-grid">
+
+            <div class="method-card">
+                <div class="method-header">
+                    <div class="method-icon"><i class="fas fa-code"></i></div>
+                    <div>
+                        <h3>Client Library</h3>
+                        <p>Lightweight middleware for your app</p>
+                    </div>
+                    <span class="method-badge recommended">Recommended</span>
+                </div>
+                <div class="method-body">
+                    <div class="method-steps">
+                        <div class="method-step">
+                            <span class="ms-num">1</span>
+                            <div>
+                                <strong>Register your website</strong>
+                                <p>Go to <a href="/admin/clients">Clients</a> and add your domain with origin server IP.</p>
+                            </div>
+                        </div>
+                        <div class="method-step">
+                            <span class="ms-num">2</span>
+                            <div>
+                                <strong>Copy your API key</strong>
+                                <p>Each site gets a unique key. Copy it from the clients list.</p>
+                            </div>
+                        </div>
+                        <div class="method-step">
+                            <span class="ms-num">3</span>
+                            <div>
+                                <strong>Add the middleware</strong>
+                                <p>Install the client library and add one line to your app.</p>
+                            </div>
+                        </div>
+                        <div class="method-step">
+                            <span class="ms-num">4</span>
+                            <div>
+                                <strong>You're protected</strong>
+                                <p>All requests are analyzed in real-time. Blocked attacks return a block page.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="code-tabs">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" data-tab="nodejs" onclick="switchTab('nodejs')">
+                                <i class="fab fa-node-js"></i> Node.js
+                            </button>
+                            <button class="tab-btn" data-tab="python" onclick="switchTab('python')">
+                                <i class="fab fa-python"></i> Python
+                            </button>
+                            <button class="tab-btn" data-tab="php" onclick="switchTab('php')">
+                                <i class="fab fa-php"></i> PHP
+                            </button>
+                        </div>
+
+                        <div class="tab-content active" id="tab-nodejs">
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-lang">JavaScript</span>
+                                    <button class="copy-btn" onclick="copyCode('nodejs-code')"><i class="fas fa-copy"></i> Copy</button>
+                                </div>
+                                <pre><code id="nodejs-code"><span class="kw">const</span> waf = <span class="fn">require</span>(<span class="str">'./client/node/waf'</span>);
+
+<span class="cmt">// Add before your routes</span>
+app.<span class="fn">use</span>(<span class="fn">waf</span>({
+  <span class="key">apiKey</span>: <span class="str">'YOUR_API_KEY'</span>,
+  <span class="key">server</span>: <span class="str">'http://localhost:5000'</span>  <span class="cmt">// WAF server URL</span>
+}));</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tab-python">
+                            <div class="code-sub-tabs">
+                                <button class="sub-tab active" onclick="switchSubTab(this, 'flask')">Flask</button>
+                                <button class="sub-tab" onclick="switchSubTab(this, 'django')">Django</button>
+                            </div>
+                            <div class="sub-content active" id="sub-flask">
+                                <div class="code-block">
+                                    <div class="code-header">
+                                        <span class="code-lang">Python / Flask</span>
+                                        <button class="copy-btn" onclick="copyCode('flask-code')"><i class="fas fa-copy"></i> Copy</button>
+                                    </div>
+                                    <pre><code id="flask-code"><span class="kw">from</span> client.python.waf <span class="kw">import</span> waf_middleware
+
+<span class="cmt"># Wrap your Flask app</span>
+app.wsgi_app = <span class="fn">waf_middleware</span>(
+  app.wsgi_app,
+  <span class="key">api_key</span>=<span class="str">'YOUR_API_KEY'</span>,
+  <span class="key">server</span>=<span class="str">'http://localhost:5000'</span>
+)</code></pre>
+                                </div>
+                            </div>
+                            <div class="sub-content" id="sub-django">
+                                <div class="code-block">
+                                    <div class="code-header">
+                                        <span class="code-lang">Python / Django</span>
+                                        <button class="copy-btn" onclick="copyCode('django-code')"><i class="fas fa-copy"></i> Copy</button>
+                                    </div>
+                                    <pre><code id="django-code"><span class="cmt"># settings.py</span>
+WAF_API_KEY = <span class="str">'YOUR_API_KEY'</span>
+WAF_SERVER = <span class="str">'http://localhost:5000'</span>
+
+MIDDLEWARE = [
+  <span class="str">'client.python.waf.DjangoWAFMiddleware'</span>,  <span class="cmt"># Add at top</span>
+  <span class="cmt"># ... your other middleware</span>
+]</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tab-php">
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-lang">PHP</span>
+                                    <button class="copy-btn" onclick="copyCode('php-code')"><i class="fas fa-copy"></i> Copy</button>
+                                </div>
+                                <pre><code id="php-code"><span class="kw">&lt;?php</span>
+<span class="fn">require_once</span> <span class="str">'client/php/waf.php'</span>;
+
+$waf = <span class="kw">new</span> <span class="fn">SecureWAF</span>(<span class="str">'YOUR_API_KEY'</span>);
+$waf-><span class="fn">protect</span>();  <span class="cmt">// Add at top of your PHP file</span></code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="method-card">
+                <div class="method-header">
+                    <div class="method-icon proxy"><i class="fas fa-network-wired"></i></div>
+                    <div>
+                        <h3>Reverse Proxy</h3>
+                        <p>Zero-code: WAF sits in front of your app</p>
+                    </div>
+                    <span class="method-badge proxy-badge">Zero Config</span>
+                </div>
+                <div class="method-body">
+                    <div class="method-steps">
+                        <div class="method-step">
+                            <span class="ms-num proxy-num">1</span>
+                            <div>
+                                <strong>Edit config.json</strong>
+                                <p>Set your backend URL and website name in the config file.</p>
+                            </div>
+                        </div>
+                        <div class="method-step">
+                            <span class="ms-num proxy-num">2</span>
+                            <div>
+                                <strong>Start the proxy</strong>
+                                <p>Run <code>waf_proxy.py</code> — it sits between visitors and your app.</p>
+                            </div>
+                        </div>
+                        <div class="method-step">
+                            <span class="ms-num proxy-num">3</span>
+                            <div>
+                                <strong>Point your domain</strong>
+                                <p>Update DNS or nginx to route traffic through the WAF proxy port.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-lang">config.json</span>
+                            <button class="copy-btn" onclick="copyCode('proxy-code')"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                        <pre><code id="proxy-code">{
+  <span class="key">"website_name"</span>: <span class="str">"mywebsite.com"</span>,
+  <span class="key">"backend_url"</span>: <span class="str">"http://localhost:8000"</span>,
+  <span class="key">"proxy_port"</span>: <span class="num">3000</span>,
+  <span class="key">"backend_timeout"</span>: <span class="num">30</span>,
+  <span class="key">"whitelist_localhost"</span>: <span class="bool">false</span>,
+  <span class="key">"frontend"</span>: {
+    <span class="key">"mode"</span>: <span class="str">"static"</span>,
+    <span class="key">"static_dir"</span>: <span class="str">"../frontend/dist"</span>,
+    <span class="key">"spa"</span>: <span class="bool">true</span>
+  },
+  <span class="key">"backend_api"</span>: {
+    <span class="key">"prefix"</span>: <span class="str">"api"</span>,
+    <span class="key">"forward"</span>: <span class="bool">true</span>
+  }
+}</code></pre>
+                    </div>
+                    <div class="proxy-note">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Static files (JS, CSS, images) bypass WAF checks for zero latency. Only dynamic requests are analyzed.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-section">
+            <div class="section-header-bar">
+                <h3><i class="fas fa-plug"></i> API Reference</h3>
+                <span class="api-base">Base: <code>http://localhost:5000</code></span>
+            </div>
+
+            <div class="api-card">
+                <div class="api-top">
+                    <span class="api-method post">POST</span>
+                    <code class="api-endpoint">/api/analyze</code>
+                    <span class="api-desc">Analyze an incoming request for threats</span>
+                </div>
+                <div class="api-details">
+                    <div class="api-col">
+                        <div class="api-label">Request Headers</div>
+                        <div class="api-code">Authorization: Bearer YOUR_API_KEY<br>Content-Type: application/json</div>
+                    </div>
+                    <div class="api-col">
+                        <div class="api-label">Request Body</div>
+                        <div class="api-code">{
+  <span class="key">"domain"</span>: <span class="str">"yourdomain.com"</span>,
+  <span class="key">"request"</span>: {
+    <span class="key">"url"</span>: <span class="str">"/page"</span>,
+    <span class="key">"method"</span>: <span class="str">"GET"</span>,
+    <span class="key">"headers"</span>: {},
+    <span class="key">"body"</span>: <span class="str">""</span>,
+    <span class="key">"query_params"</span>: {},
+    <span class="key">"ip"</span>: <span class="str">"visitor_ip"</span>
+  }
+}</div>
+                    </div>
+                    <div class="api-col">
+                        <div class="api-label">Response (Allowed)</div>
+                        <div class="api-code response">{ <span class="key">"status"</span>: <span class="str">"allowed"</span> }</div>
+                    </div>
+                    <div class="api-col">
+                        <div class="api-label">Response (Blocked)</div>
+                        <div class="api-code response">{ <span class="key">"status"</span>: <span class="str">"blocked"</span>, <span class="key">"attack_type"</span>: <span class="str">"SQL Injection"</span>, <span class="key">"block_page"</span>: <span class="str">"&lt;html&gt;..."</span> }</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-grid">
+                <div class="api-mini">
+                    <span class="api-method get">GET</span>
+                    <code>/api/stats</code>
+                    <p>Get real-time WAF statistics (total requests, blocked, allowed)</p>
+                </div>
+                <div class="api-mini">
+                    <span class="api-method post">POST</span>
+                    <code>/api/block</code>
+                    <p>Manually block an IP address from accessing your site</p>
+                </div>
+                <div class="api-mini">
+                    <span class="api-method get">GET</span>
+                    <code>/api/logs</code>
+                    <p>Retrieve attack logs with timestamps, IPs, and attack types</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="/static/js/admin.js"></script>
+<script>
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function switchSubTab(btn, sub) {
+    btn.parentElement.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    btn.closest('.tab-content').querySelectorAll('.sub-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('sub-' + sub).classList.add('active');
+}
+
+function copyCode(id) {
+    const el = document.getElementById(id);
+    const text = el.innerText || el.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = el.closest('.code-block').querySelector('.copy-btn');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
+    });
+}
+</script>
+
+<style>
+    .connect-wrapper { max-width: 960px; }
+
+    .connect-hero {
+        text-align: center;
+        padding: 36px 24px 28px;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        border-radius: 16px;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease forwards;
+        opacity: 0;
+    }
+    .connect-hero::before {
+        content: '';
+        position: absolute;
+        top: -40%;
+        left: -20%;
+        width: 140%;
+        height: 100%;
+        background: radial-gradient(ellipse at center, rgba(37,99,235,0.15) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(37,99,235,0.35);
+        margin-bottom: 16px;
+        position: relative;
+    }
+    .connect-hero h2 {
+        font-size: 22px;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 8px;
+        position: relative;
+    }
+    .connect-hero p {
+        color: #94a3b8;
+        font-size: 14px;
+        line-height: 1.6;
+        max-width: 520px;
+        margin: 0 auto;
+        position: relative;
+    }
+
+    .flow-diagram {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 20px;
+        background: white;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        margin-bottom: 20px;
+        overflow-x: auto;
+        animation: fadeInUp 0.5s ease forwards;
+        opacity: 0;
+        animation-delay: 0.05s;
+    }
+    .flow-step { display: flex; align-items: center; }
+    .flow-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .flow-node i { font-size: 20px; }
+    .flow-node.visitor { background: #f1f5f9; color: #475569; }
+    .flow-node.server { background: #eff6ff; color: #2563eb; }
+    .flow-node.waf { background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.25); }
+    .flow-node.decision { background: transparent; padding: 0; }
+    .decision-branch { display: flex; gap: 8px; }
+    .branch-allow, .branch-block {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .branch-allow { background: #ecfdf5; color: #059669; }
+    .branch-block { background: #fef2f2; color: #dc2626; }
+    .flow-arrow {
+        color: #cbd5e1;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .methods-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-bottom: 20px;
+    }
+
+    .method-card {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease forwards;
+        opacity: 0;
+        animation-delay: 0.1s;
+        display: flex;
+        flex-direction: column;
+    }
+    .method-card:nth-child(2) { animation-delay: 0.15s; }
+
+    .method-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 18px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        background: #fafbfc;
+    }
+    .method-icon {
+        width: 42px;
+        height: 42px;
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: white;
+        flex-shrink: 0;
+    }
+    .method-icon.proxy { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+    .method-header h3 { font-size: 15px; font-weight: 600; color: #0f172a; margin: 0; }
+    .method-header p { font-size: 12px; color: #94a3b8; margin: 0; }
+    .method-badge {
+        margin-left: auto;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+    }
+    .method-badge.recommended { background: #ecfdf5; color: #059669; }
+    .method-badge.proxy-badge { background: #f5f3ff; color: #7c3aed; }
+
+    .method-body { padding: 18px 20px; flex: 1; display: flex; flex-direction: column; }
+
+    .method-steps { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+    .method-step {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    .ms-num {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #eff6ff;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+    .ms-num.proxy-num { background: #f5f3ff; color: #7c3aed; }
+    .method-step strong { font-size: 13px; color: #0f172a; display: block; margin-bottom: 2px; }
+    .method-step p { font-size: 12px; color: #64748b; margin: 0; line-height: 1.5; }
+    .method-step a { color: #2563eb; text-decoration: none; font-weight: 500; }
+    .method-step a:hover { text-decoration: underline; }
+    .method-step code { background: #f1f5f9; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+    .code-tabs { margin-top: auto; }
+    .tab-buttons { display: flex; gap: 4px; margin-bottom: 0; }
+    .tab-btn {
+        padding: 7px 14px;
+        border: none;
+        background: #f1f5f9;
+        color: #64748b;
+        border-radius: 8px 8px 0 0;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .tab-btn:hover { background: #e2e8f0; color: #475569; }
+    .tab-btn.active { background: #0f172a; color: #e2e8f0; }
+    .tab-btn i { font-size: 14px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .code-sub-tabs { display: flex; gap: 4px; margin-bottom: 0; margin-top: 4px; }
+    .sub-tab {
+        padding: 5px 12px;
+        border: none;
+        background: #f1f5f9;
+        color: #64748b;
+        border-radius: 6px 6px 0 0;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .sub-tab:hover { background: #e2e8f0; }
+    .sub-tab.active { background: #1e293b; color: #e2e8f0; }
+    .sub-content { display: none; }
+    .sub-content.active { display: block; }
+
+    .code-block {
+        background: #0f172a;
+        border-radius: 0 10px 10px 10px;
+        overflow: hidden;
+    }
+    .code-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .code-lang { font-size: 11px; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .copy-btn {
+        background: rgba(255,255,255,0.06);
+        border: none;
+        color: #94a3b8;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,0.12); color: white; }
+    .copy-btn.copied { background: rgba(16,185,129,0.2); color: #34d399; }
+    .code-block pre {
+        padding: 14px 16px;
+        overflow-x: auto;
+        font-size: 12.5px;
+        line-height: 1.7;
+    }
+    .code-block code {
+        font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+        background: none;
+        padding: 0;
+        color: #e2e8f0;
+    }
+    .kw { color: #c084fc; }
+    .str { color: #34d399; }
+    .fn { color: #60a5fa; }
+    .cmt { color: #475569; }
+    .key { color: #7dd3fc; }
+    .num { color: #fbbf24; }
+    .bool { color: #f97316; }
+
+    .proxy-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 14px;
+        background: #f5f3ff;
+        border-radius: 8px;
+        border: 1px solid #ede9fe;
+        margin-top: 12px;
+        font-size: 12px;
+        color: #6d28d9;
+        line-height: 1.5;
+    }
+    .proxy-note i { margin-top: 2px; flex-shrink: 0; }
+
+    .api-section {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        overflow: hidden;
+        animation: fadeInUp 0.5s ease forwards;
+        opacity: 0;
+        animation-delay: 0.2s;
+    }
+    .section-header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        background: #fafbfc;
+    }
+    .section-header-bar h3 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+    }
+    .section-header-bar h3 i { color: #2563eb; }
+    .api-base { font-size: 12px; color: #94a3b8; }
+    .api-base code { background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+
+    .api-card { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; }
+    .api-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+    .api-method {
+        padding: 3px 10px;
+        border-radius: 5px;
+        font-weight: 700;
+        font-size: 11px;
+        color: white;
+        letter-spacing: 0.5px;
+    }
+    .api-method.post { background: #059669; }
+    .api-method.get { background: #2563eb; }
+    .api-endpoint { font-size: 14px; color: #0f172a; font-weight: 500; }
+    .api-desc { font-size: 13px; color: #64748b; margin-left: auto; }
+
+    .api-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .api-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #94a3b8;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+    .api-code {
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-family: 'SF Mono', 'Cascadia Code', monospace;
+        font-size: 11.5px;
+        line-height: 1.6;
+        overflow-x: auto;
+    }
+    .api-code.response { font-size: 12px; }
+
+    .api-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+    }
+    .api-mini {
+        padding: 14px 20px;
+        border-right: 1px solid #f1f5f9;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .api-mini:last-child { border-right: none; }
+    .api-mini .api-method { align-self: flex-start; }
+    .api-mini code { font-size: 13px; font-weight: 500; color: #0f172a; }
+    .api-mini p { font-size: 12px; color: #64748b; margin: 0; line-height: 1.4; }
+
+    @media (max-width: 900px) {
+        .methods-grid { grid-template-columns: 1fr; }
+        .api-details { grid-template-columns: 1fr; }
+        .api-grid { grid-template-columns: 1fr; }
+        .api-mini { border-right: none; border-bottom: 1px solid #f1f5f9; }
+        .api-mini:last-child { border-bottom: none; }
+    }
+
+    @media (max-width: 600px) {
+        .flow-diagram { padding: 14px 10px; gap: 4px; flex-wrap: wrap; justify-content: center; }
+        .flow-arrow { display: none; }
+        .flow-node { padding: 8px 12px; font-size: 11px; }
+        .flow-node i { font-size: 16px; }
+        .connect-hero { padding: 24px 16px; }
+        .connect-hero h2 { font-size: 18px; }
+        .method-body { padding: 14px; }
+        .method-header { padding: 14px; flex-wrap: wrap; }
+        .method-badge { margin-left: 0; }
+    }
+</style>
+</body>
+</html>

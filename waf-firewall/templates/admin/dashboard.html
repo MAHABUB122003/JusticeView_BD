@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAF Dashboard - Secure Firewall</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <style>
+        .stat-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .stat-clean-btn { background: none; border: none; color: #94a3b8; cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 13px; opacity: 0; transition: all 0.2s; }
+        .stat-card:hover .stat-clean-btn { opacity: 1; }
+        .stat-clean-btn:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+    </style>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="logo-text">
+                <h2>WAF</h2>
+                <span>Secure Firewall</span>
+            </div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-label">Main</div>
+        <a href="/admin/dashboard" class="active">
+            <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+            <span>Dashboard</span>
+        </a>
+        <a href="/admin/logs">
+            <span class="nav-icon"><i class="fas fa-list"></i></span>
+            <span>Logs</span>
+        </a>
+        <a href="/admin/rules">
+            <span class="nav-icon"><i class="fas fa-shield"></i></span>
+            <span>Rules</span>
+        </a>
+        <div class="nav-label">Management</div>
+        <a href="/admin/clients">
+            <span class="nav-icon"><i class="fas fa-globe"></i></span>
+            <span>Clients</span>
+        </a>
+        <a href="/admin/blacklist">
+            <span class="nav-icon"><i class="fas fa-ban"></i></span>
+            <span>Blacklist</span>
+        </a>
+        <a href="/admin/settings">
+            <span class="nav-icon"><i class="fas fa-cog"></i></span>
+            <span>Settings</span>
+        </a>
+        <a href="/connect">
+            <span class="nav-icon"><i class="fas fa-link"></i></span>
+            <span>Connect</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()">
+            <i class="fas fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+    </div>
+</aside>
+
+<div class="main-content">
+    <header class="header">
+        <div class="header-left">
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div>
+                <h1>Dashboard</h1>
+                <div class="breadcrumb">WAF / <span>Dashboard</span></div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="clock" id="liveClock">{{ now.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+            <div style="position:relative">
+                <button class="notification-btn" id="notificationBtn" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="dot"></span>
+                </button>
+                <div class="notification-panel" id="notificationPanel">
+                    <div class="panel-header">
+                        <span>Notifications</span>
+                        <span style="font-size:11px;color:#94a3b8;font-weight:400">3 new</span>
+                    </div>
+                    <div class="panel-item">
+                        <div style="color:#ef4444"><i class="fas fa-bug"></i></div>
+                        <div style="font-size:13px">SQL Injection blocked from 192.168.1.100</div>
+                    </div>
+                    <div class="panel-item">
+                        <div style="color:#f59e0b"><i class="fas fa-bug"></i></div>
+                        <div style="font-size:13px">XSS attack detected on /search</div>
+                    </div>
+                    <div class="panel-item">
+                        <div style="color:#10b981"><i class="fas fa-check-circle"></i></div>
+                        <div style="font-size:13px">New client "example.com" connected</div>
+                    </div>
+                </div>
+            </div>
+            <div style="position:relative">
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="avatar">A</div>
+                    <span class="user-name">Admin</span>
+                    <i class="fas fa-chevron-down" style="font-size:10px;color:#94a3b8"></i>
+                </div>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="/admin/settings"><i class="fas fa-user"></i> Profile</a>
+                    <a href="/admin/settings"><i class="fas fa-cog"></i> Settings</a>
+                    <div class="divider"></div>
+                    <button onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+            <div class="stat-top">
+                <div class="stat-icon-wrap blue"><i class="fas fa-shield-halved"></i></div>
+                <button class="stat-clean-btn" onclick="cleanStat('attacks')" title="Reset Attack Count">
+                    <i class="fas fa-trash-can"></i>
+                </button>
+            </div>
+            <div class="stat-number" id="statAttacks">{{ stats.total_attacks_blocked }}</div>
+            <div class="stat-label">Total Attacks Blocked</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 12.5%</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-top">
+                <div class="stat-icon-wrap green"><i class="fas fa-chart-line"></i></div>
+                <button class="stat-clean-btn" onclick="cleanStat('requests')" title="Reset Request Count">
+                    <i class="fas fa-trash-can"></i>
+                </button>
+            </div>
+            <div class="stat-number" id="statRequests">{{ stats.total_requests }}</div>
+            <div class="stat-label">Total Requests</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 8.3%</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-top">
+                <div class="stat-icon-wrap purple"><i class="fas fa-globe"></i></div>
+            </div>
+            <div class="stat-number" id="statClients">{{ stats.active_clients }}</div>
+            <div class="stat-label">Active Clients</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 2</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-top">
+                <div class="stat-icon-wrap red"><i class="fas fa-ban"></i></div>
+            </div>
+            <div class="stat-number" id="statBlacklist">{{ stats.blacklisted_ips }}</div>
+            <div class="stat-label">Blacklisted IPs</div>
+            <div class="stat-trend down"><i class="fas fa-arrow-down"></i> 5.1%</div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-pie" style="color:#2563eb;margin-right:6px"></i> Attack Types</h3>
+                <span class="chart-action">Distribution</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="attackChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-bar" style="color:#10b981;margin-right:6px"></i> Attacks Over Time</h3>
+                <span class="chart-action">Last 7 days</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="top-attackers">
+        <div class="section-header">
+            <h3><i class="fas fa-crosshairs" style="color:#ef4444;margin-right:6px"></i> Top Attacking IPs</h3>
+            <a href="/admin/logs" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>IP Address</th>
+                    <th>Attacks</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attacker in stats.top_attackers[:5] %}
+                <tr>
+                    <td>
+                        <span class="rank-badge {% if loop.index == 1 %}top1{% elif loop.index == 2 %}top2{% elif loop.index == 3 %}top3{% endif %}">
+                            {{ loop.index }}
+                        </span>
+                    </td>
+                    <td><span class="attacker-ip">{{ attacker.ip }}</span></td>
+                    <td>
+                        <div class="attack-progress">
+                            <div class="progress-bar">
+                                {% set max_attacks = stats.top_attackers[0].count if stats.top_attackers else 1 %}
+                                <div class="fill" style="width:{{ (attacker.count / max_attacks * 100)|int }}%;background:{% if loop.index == 1 %}linear-gradient(90deg,#ef4444,#f87171){% elif loop.index == 2 %}linear-gradient(90deg,#f59e0b,#fbbf24){% else %}linear-gradient(90deg,#2563eb,#60a5fa){% endif %}"></div>
+                            </div>
+                            <span class="count">{{ attacker.count }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="badge danger" style="cursor:pointer;border:none" onclick="blockAttacker('{{ attacker.ip }}')">Block</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align:center;color:#94a3b8;padding:20px">No attack data available</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="recent-activity">
+        <div class="section-header">
+            <h3><i class="fas fa-clock-rotate" style="color:#8b5cf6;margin-right:6px"></i> Recent Attacks Blocked</h3>
+            <a href="/admin/logs" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="activity-timeline" id="activityTimeline">
+            {% for log in stats.recent_logs %}
+            <div class="activity-item">
+                <div class="activity-time">{{ log.timestamp }}</div>
+                <div class="activity-content">
+                    <span class="activity-type {% if log.attack_type in ['SQL Injection','SQLi'] %}critical{% elif log.attack_type in ['XSS','LFI'] %}high{% else %}medium{% endif %}">
+                        <i class="fas fa-bug"></i> {{ log.attack_type }}
+                    </span>
+                    <div class="activity-detail">From <strong>{{ log.ip }}</strong></div>
+                    <div class="activity-payload">{{ log.url }}</div>
+                </div>
+            </div>
+            {% else %}
+            <div style="text-align:center;color:#94a3b8;padding:30px">
+                <i class="fas fa-shield-check" style="font-size:32px;display:block;margin-bottom:8px"></i>
+                No attacks recorded yet
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/admin.js"></script>
+<script src="/static/js/charts.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initCharts({
+            attack_types: {{ stats.attack_types|tojson }},
+            attack_counts: {{ stats.attack_counts|tojson }}
+        });
+    });
+
+    function cleanStat(type) {
+        const label = type === 'attacks' ? 'Total Attacks Blocked' : 'Total Requests';
+        if (!confirm('Are you sure you want to reset ' + label + ' to zero?')) return;
+        fetch('/api/admin/reset_stats/' + type, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        }).then(r => r.json()).then(data => {
+            alert(data.message);
+            location.reload();
+        });
+    }
+</script>
+</body>
+</html>

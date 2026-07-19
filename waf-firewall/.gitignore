@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pyo
+models/*.pkl
+logs/
+static/images/
+*.env
+.env

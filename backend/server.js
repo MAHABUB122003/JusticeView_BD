@@ -4,6 +4,14 @@ const app = require("./src/app");
 const connectDB = require("./config/db");
 const logger = require("./src/utils/logger");
 
+// WAF Protection - Protects all API routes
+const waf = require('../waf-firewall/client/node/waf');
+app.use('/api', waf({
+  apiKey: '3180ea57d7c88d20815fb434fc7868e6',   // <-- Replace with your API key from WAF dashboard
+  server: 'http://localhost:5000',
+  domain: 'localhost'
+}));
+
 // Connect Database
 connectDB();
 

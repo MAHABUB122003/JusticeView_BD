@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAF - Clients</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="logo-text">
+                <h2>WAF</h2>
+                <span>Secure Firewall</span>
+            </div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-label">Main</div>
+        <a href="/admin/dashboard"><span class="nav-icon"><i class="fas fa-chart-pie"></i></span><span>Dashboard</span></a>
+        <a href="/admin/logs"><span class="nav-icon"><i class="fas fa-list"></i></span><span>Logs</span></a>
+        <a href="/admin/rules"><span class="nav-icon"><i class="fas fa-shield"></i></span><span>Rules</span></a>
+        <div class="nav-label">Management</div>
+        <a href="/admin/clients" class="active"><span class="nav-icon"><i class="fas fa-globe"></i></span><span>Clients</span></a>
+        <a href="/admin/blacklist"><span class="nav-icon"><i class="fas fa-ban"></i></span><span>Blacklist</span></a>
+        <a href="/admin/settings"><span class="nav-icon"><i class="fas fa-cog"></i></span><span>Settings</span></a>
+        <a href="/connect"><span class="nav-icon"><i class="fas fa-link"></i></span><span>Connect</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-right-from-bracket"></i><span>Logout</span></button>
+    </div>
+</aside>
+
+<div class="main-content">
+    <header class="header">
+        <div class="header-left">
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle sidebar"><i class="fas fa-bars"></i></button>
+            <div>
+                <h1>Clients Management</h1>
+                <div class="breadcrumb">WAF / <span>Clients</span></div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="clock" id="liveClock">{{ now.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+            <div style="position:relative">
+                <button class="notification-btn" id="notificationBtn" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="dot"></span>
+                </button>
+                <div class="notification-panel" id="notificationPanel">
+                    <div class="panel-header"><span>Notifications</span><span style="font-size:11px;color:#94a3b8;font-weight:400">3 new</span></div>
+                    <div class="panel-item"><div style="color:#ef4444"><i class="fas fa-bug"></i></div><div style="font-size:13px">SQL Injection blocked from 192.168.1.100</div></div>
+                    <div class="panel-item"><div style="color:#f59e0b"><i class="fas fa-bug"></i></div><div style="font-size:13px">XSS attack detected on /search</div></div>
+                    <div class="panel-item"><div style="color:#10b981"><i class="fas fa-check-circle"></i></div><div style="font-size:13px">New client "example.com" connected</div></div>
+                </div>
+            </div>
+            <div style="position:relative">
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="avatar">A</div>
+                    <span class="user-name">Admin</span>
+                    <i class="fas fa-chevron-down" style="font-size:10px;color:#94a3b8"></i>
+                </div>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="/admin/settings"><i class="fas fa-user"></i> Profile</a>
+                    <a href="/admin/settings"><i class="fas fa-cog"></i> Settings</a>
+                    <div class="divider"></div>
+                    <button onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+        <div class="action-bar">
+            <button class="btn-primary" onclick="showAddClientModal()">+ Add Website</button>
+        </div>
+
+        <div class="clients-grid">
+            {% for client in clients %}
+            <div class="client-card">
+                <div class="client-header">
+                    <h3>{{ client.domain }}</h3>
+                    <span class="badge {% if client.status == 'active' %}success{% elif client.status == 'suspended' %}danger{% else %}warning{% endif %}">{{ client.status }}</span>
+                </div>
+                <div class="client-body">
+                    <p><strong>Origin:</strong> {{ client.origin_server }}</p>
+                    <p><strong>Security Level:</strong> <span class="badge severity-{{ client.security_level }}">{{ client.security_level }}</span></p>
+                    <p><strong>API Key:</strong> <code>{{ client.api_key[:20] }}...</code></p>
+                    <p><strong>Created:</strong> {{ client.created_at }}</p>
+                </div>
+                <div class="client-actions">
+                    <button class="btn-small btn-edit" onclick="editClient('{{ client.id }}')">Edit</button>
+                    <button class="btn-small btn-delete" onclick="deleteClient('{{ client.id }}')">Delete</button>
+                    <button class="btn-small btn-key" onclick="copyKey('{{ client.api_key }}')">Copy Key</button>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>No clients registered yet. Click "Add Website" to connect a new website.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="clientModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Add Website</h2>
+            <form id="clientForm">
+                <input type="hidden" id="clientId">
+                <div class="form-group">
+                    <label>Domain</label>
+                    <input type="text" id="clientDomain" required placeholder="e.g., example.com">
+                </div>
+                <div class="form-group">
+                    <label>Origin Server IP</label>
+                    <input type="text" id="clientOrigin" required placeholder="e.g., http://192.168.1.100">
+                </div>
+                <div class="form-group">
+                    <label>Security Level</label>
+                    <select id="clientSecurity">
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Save Client</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showAddClientModal() {
+            document.getElementById('modalTitle').textContent = 'Add Website';
+            document.getElementById('clientForm').reset();
+            document.getElementById('clientId').value = '';
+            document.getElementById('clientModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('clientModal').style.display = 'none';
+        }
+
+        function editClient(id) {
+            fetch('/api/admin/clients')
+                .then(r => r.json())
+                .then(clients => {
+                    const client = clients.find(c => c.id === id);
+                    if (client) {
+                        document.getElementById('modalTitle').textContent = 'Edit Website';
+                        document.getElementById('clientId').value = id;
+                        document.getElementById('clientDomain').value = client.domain;
+                        document.getElementById('clientOrigin').value = client.origin_server;
+                        document.getElementById('clientSecurity').value = client.security_level;
+                        document.getElementById('clientModal').style.display = 'flex';
+                    }
+                });
+        }
+
+        document.getElementById('clientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('clientId').value;
+            const data = {
+                domain: document.getElementById('clientDomain').value,
+                origin_server: document.getElementById('clientOrigin').value,
+                security_level: document.getElementById('clientSecurity').value
+            };
+            const url = id ? `/api/admin/clients?id=${id}` : '/api/admin/clients';
+            const method = id ? 'PUT' : 'POST';
+            fetch(url, {method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)})
+                .then(r => r.json())
+                .then(() => window.location.reload());
+        });
+
+        function deleteClient(id) {
+            if (confirm('Delete this client?')) {
+                fetch(`/api/admin/clients?id=${id}`, {method: 'DELETE'})
+                    .then(r => r.json())
+                    .then(() => window.location.reload());
+            }
+        }
+
+        function copyKey(key) {
+            navigator.clipboard.writeText(key);
+            alert('API key copied to clipboard');
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('clientModal')) closeModal();
+        }
+    </script>
+    <script src="/static/js/admin.js"></script>
+
+    <style>
+        .action-bar { margin-bottom: 20px; }
+        .btn-primary { padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600; }
+        .clients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .client-card { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
+        .client-header { padding: 15px 20px; background: #f8f9fa; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e9ecef; }
+        .client-header h3 { margin: 0; font-size: 16px; color: #2c3e50; }
+        .client-body { padding: 15px 20px; }
+        .client-body p { margin: 8px 0; color: #495057; }
+        .client-body code { font-size: 12px; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; }
+        .client-actions { padding: 12px 20px; border-top: 1px solid #e9ecef; display: flex; gap: 8px; }
+        .btn-small { padding: 6px 14px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .btn-edit { background: #667eea; color: white; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .btn-key { background: #27ae60; color: white; }
+        .btn-key:hover { background: #219a52; }
+        .badge.severity-high { background: #fee; color: #e74c3c; }
+        .badge.severity-medium { background: #fff3cd; color: #e67e22; }
+        .badge.severity-low { background: #e8f5e9; color: #27ae60; }
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px; background: white; border-radius: 12px; color: #6c757d; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 500px; max-width: 90%; }
+        .close { float: right; font-size: 28px; cursor: pointer; }
+        .modal-content .form-group { margin-bottom: 15px; }
+        .modal-content label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .modal-content input, .modal-content select { width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; box-sizing: border-box; }
+    </style>
+</body>
+</html>

@@ -1,0 +1,32 @@
+For ANY Node.js Website
+Just add these 2 lines to their server.js or app.js:
+
+
+const waf = require('/path/to/waf-firewall/client/node/waf');
+app.use('/api', waf({
+  apiKey: 'THEIR_API_KEY',
+  server: 'http://YOUR_WAF_SERVER_IP:5000',
+  domain: 'their-domain.com'
+}));
+
+
+
+For ANY Python/Flask Website
+
+import sys
+sys.path.insert(0, '/path/to/waf-firewall')
+from client.python.waf import waf_middleware
+
+app.wsgi_app = waf_middleware(app.wsgi_app,
+    api_key='THEIR_API_KEY',
+    server='http://YOUR_WAF_SERVER_IP:5000',
+    domain='their-domain.com'
+)
+
+
+For ANY PHP Website
+
+
+require_once '/path/to/waf-firewall/client/php/waf.php';
+$waf = new SecureWAF('THEIR_API_KEY', 'http://YOUR_WAF_SERVER_IP:5000');
+$waf->protect();
