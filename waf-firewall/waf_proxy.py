@@ -104,7 +104,7 @@ learning_mode = waf_settings.get('learning_mode', False)
 security_level = waf_settings.get('security_level', 'high')
 confidence_threshold = waf_settings.get('confidence_threshold', 0.7)
 log_retention_days = waf_settings.get('log_retention_days', 30)
-auto_block_enabled = waf_settings.get('auto_block_enabled', True)
+auto_block_enabled = waf_settings.get('auto_block_enabled', False)
 auto_block_threshold = waf_settings.get('auto_block_threshold', 20)
 auto_block_window = waf_settings.get('auto_block_window_hours', 24)
 auto_block_duration = waf_settings.get('auto_block_duration_hours', 24)
@@ -176,7 +176,8 @@ def analyze_local(incoming_request):
         return {'status': 'allowed', 'attack_type': None, 'confidence': 0.0, 'message': 'Learning mode - allowing all'}
 
     if rate_limiter.is_rate_limited(ip):
-        attack_blocker.auto_block(ip, 'Rate limit exceeded', 1)
+        if auto_block_enabled:
+            attack_blocker.auto_block(ip, 'Rate limit exceeded', 1)
         return {'status': 'blocked', 'attack_type': 'Rate Limiting', 'confidence': 1.0,
                 'reference_id': str(int(time.time() * 1000))[-8:]}
 
@@ -404,7 +405,7 @@ def reload_settings():
     security_level = waf_settings.get('security_level', 'high')
     confidence_threshold = waf_settings.get('confidence_threshold', 0.7)
     log_retention_days = waf_settings.get('log_retention_days', 30)
-    auto_block_enabled = waf_settings.get('auto_block_enabled', True)
+    auto_block_enabled = waf_settings.get('auto_block_enabled', False)
     auto_block_threshold = waf_settings.get('auto_block_threshold', 20)
     auto_block_window = waf_settings.get('auto_block_window_hours', 24)
     auto_block_duration = waf_settings.get('auto_block_duration_hours', 24)
@@ -441,7 +442,13 @@ def proxy(path):
 
     if path and any(path.startswith(p) for p in STATIC_PREFIXES):
         stats["static"] += 1
-        return serve_static(path)
+        result = analyze_local(request)
+        if result.get("status") == "blocked":
+            stats["blocked"] += 1
+            log_attack(request, result)
+            return block_page(result)
+        stats["allowed"] += 1
+        return forward_backend(request)
     if path and any(path.lower().endswith(e) for e in STATIC_EXT):
         stats["static"] += 1
         return serve_static(path)
